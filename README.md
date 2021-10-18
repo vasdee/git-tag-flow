@@ -1,20 +1,28 @@
-# Git Tag Flow 
+# Git Tag Flow (GTF)
 
-Git Tag Flow is an alternate, convention based workflow to gitflow and trunk based work flows. 
-It combines the best (lightest) features of both, and provides and opininionated, yet simple, deployment and release
-strategy via git tags and the principle of GitOps. 
+Git Tag Flow is an alternate, convention based workflow to gitflow and trunk
+based work flows. It combines the best (lightest) features of both, and provides
+and opinionated, yet simple, deployment and release strategy via git tags and
+the principle of GitOps.
 
 
 ## Why another git work flow?
 
-Git flow is heavy and even considered legacy by [some] (https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). 
-Heavy in that it requires maintenance of long lived branches and requires strict conventions when performing releases via release branches.
+Git flow is heavy and even considered legacy by
+[some](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow).
+Heavy in that it requires maintenance of long lived branches and requires strict
+conventions when performing releases via release branches.
 
-Trunk based develops suggests that your architecture should change in order to facilitate being able to deploy potentially "broken" functionality into production.
+Trunk based develops suggests that your architecture should change in order to
+facilitate being able to deploy potentially "broken" functionality into
+production.
 
-Git Tag Flow takes the simplicity of trunk and applies *some* of the wisdom from gitflow, enabling GitOps via tags and enabling tracibility of actions back to atomic commits.
-The principle is simple, you should always be able to trace back exactly what you deployed to production, within your git repository. This is not only common sense, but makes
-replicating production issues locally a less painful process.
+Git Tag Flow takes the simplicity of trunk and applies *some* of the wisdom from
+gitflow, enabling GitOps via tags and enabling tracibility of actions back to
+atomic commits. The principle is simple, you should always be able to trace back
+exactly what you deployed to production, within your git repository. This is not
+only common sense, but makes replicating production issues locally a less
+painful process.
 
 ## When should I use git tag flow?
 
@@ -188,7 +196,7 @@ steps:
 
 ### Mono Repos
 
-Git-Tag-Flow can  work with mono-repos, however there are reasons why a mono repo
+Git-Tag-Flow can work with mono-repos, however there are reasons why a mono repo
 might not always be [a](https://fossa.com/blog/pros-cons-using-monorepos/) [good](https://alexey-soshin.medium.com/monorepo-is-a-bad-idea-5e587e848a07) [choice](https://semaphoreci.com/blog/what-is-monorepo).
 
 Unlike with a multi-repo setup, in a mono-repo setup you can't deploy your artifacts via separate version numbers, as now your repository contains 

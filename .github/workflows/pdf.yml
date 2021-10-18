@@ -4,8 +4,11 @@ jobs:
   convert_via_pandoc:
     runs-on: ubuntu-18.04
     steps:
-      - uses: docker://pandoc/latex:2.14.2
+      - name: Check out markdown
+        uses: actions/checkout@v2
+      - name: Convert to pdf
+        uses: docker://pandoc/latex:2.14.2
         with:
           args: >- 
             --output=gtf.pdf
-            README.md
+             ${{ github.workspace }}/README.md

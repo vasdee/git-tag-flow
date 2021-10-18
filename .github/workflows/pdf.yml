@@ -7,6 +7,5 @@ jobs:
       - uses: docker://pandoc/core:2.9
         with:
           args: >- 
-            --standalone
             --output=gtf.pdf
             README.md

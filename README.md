@@ -20,8 +20,8 @@ facilitate being able to deploy potentially "broken" functionality into
 production.
 
 Git Tag Flow takes the simplicity of trunk and applies *some* of the wisdom from
-gitflow, enabling GitOps via tags and enabling tracibility of actions back to
-atomic commits. The principle is simple, you should always be able to trace back
+gitflow, enabling GitOps via tags and enabling traceability of actions back to
+atomic commits. The principle is simple: you should always be able to trace back
 exactly what you deployed to production, within your git repository. This is not
 only common sense, but makes replicating production issues locally a less
 painful process.
@@ -36,11 +36,12 @@ is ideal.
 
 It is not limited to container solutions....
 
-Consider a classic web application with a REST-ful backend, a Single Page
-Application and infrastructure-as-code that deploys to a cloud environment, each
-hosted in their own Git repository. Using git-tag-flow, the backend and front-end
-repositories will both produce their own distinct artifacts, the
-infrastructure-as-code deployment will deploy the artefacts.
+Consider a classic web application with a REST-full backend, a Single Page
+Application (SPA) and infrastructure-as-code (IAC) definition that deploys to a
+cloud environment, each hosted in their own Git repository. Using git-tag-flow,
+the backend and front-end repositories will both produce their own distinct
+artefacts, the infrastructure-as-code deployment will deploy the artefacts to
+the target estate.
 
 It can also work with mono-repos, however it comes with some caveats which are
 likely already accepted regardless of workflow.
@@ -72,9 +73,9 @@ pipeline to be able to detect tags and allows you to use whatever follows the
 `release/` stubb to control the flow of build events.
 
 For example, given a frontend SPA application. Tagging the main branch with
-`release/1.0.0` might cause your build pipeline to create a zip file artefact's
+`release/1.0.0` might cause your build pipeline to create a zip file artefact
 called `spa-1.0.0.zip` or perhaps build and push a docker image called
-`spa:1.0.0` - it is up to you on how to react to these events, however command
+`spa:1.0.0` - it is up to you on how to react to these events. Some command
 scenarios are listed below.
 
 For a deployment repository, things often get slightly more complicated due to
@@ -104,13 +105,13 @@ that pull requests (and pull request specific pipelines) can occur.
 You might ask, "Why is `staging/` the defacto name for a what is essentially a
 release branch". Well, the answer is that naming your branches the same as a tag
 can cause some confusion. For example, `git checkout release/1.0.0` - are we
-checking out a tag or branch here?? For this reason `staging/` is the branch
+checking out a tag or branch here? For this reason `staging/` is the branch
 name that is used to trigger a release, when the `release/` tag is applied.
 
 ## Interaction with changelogs
 
 git-tag-flow doesn't believe in automatic generation of changelogs. Automatic
-generation of changelogs is not a deterministic action and changelogs **should**
+generation of changelogs is not a deterministic action and change logs **should**
 be managed via the dev, and treated as a change to the code base in which it
 lives.
 
@@ -135,7 +136,8 @@ build event.
 
 ### Deploying to environment via tag
 
-For reference, this particular build pipeline extract is from Azure Devops.
+For reference, this particular build pipeline extract is for Azure Devops
+pipelines.
 
 ```yaml
 variables:

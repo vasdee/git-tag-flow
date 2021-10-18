@@ -4,11 +4,20 @@ jobs:
   convert_via_pandoc:
     runs-on: ubuntu-18.04
     steps:
+      - name: Create files list
+        id: files_list
+        run: |
+          mkdir output
+          echo "::set-output name=files::$(printf '"%s" ' *.md)"
       - name: Check out markdown
         uses: actions/checkout@v2
       - name: Convert to pdf
         uses: docker://pandoc/latex:2.14.2
         with:
           args: >- 
-            --output=gtf.pdf
-             ${{ github.workspace }}/README.md
+            --output=output/gtf.pdf
+            ${{ steps.files_list.outputs.files }}
+      - uses: actions/upload-artifact@master
+        with:
+          name: output
+          path: output

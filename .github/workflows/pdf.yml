@@ -1,0 +1,12 @@
+name: Make pdf
+on: push
+jobs:
+  convert_via_pandoc:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: docker://pandoc/core:2.9
+        with:
+          args: >- 
+            --standalone
+            --output=gtf.pdf
+            README.md

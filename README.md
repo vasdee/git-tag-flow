@@ -1,5 +1,7 @@
 # Git Tag Flow (GTF)
 
+![GTF](diagrams/gtfo.png)
+
 Git Tag Flow is an alternate, convention based workflow to gitflow and trunk
 based work flows. It combines the best (lightest) features of both, and provides
 and opinionated, yet simple, deployment and release strategy via git tags and
@@ -34,7 +36,7 @@ is ideal.
 
 It is not limited to container solutions....
 
-Consider a classic web application with a RESTful backend, a Single Page
+Consider a classic web application with a REST-ful backend, a Single Page
 Application and infrastructure-as-code that deploys to a cloud environment, each
 hosted in their own Git repository. Using git-tag-flow, the backend and front-end
 repositories will both produce their own distinct artifacts, the

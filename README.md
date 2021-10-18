@@ -118,7 +118,7 @@ lives.
 That being said, there is nothing to stop you generating a changelog during a
 build event.
 
-## Scenarios 
+## Scenarios
 
 ### Simple Scenario
 
@@ -154,7 +154,7 @@ trigger:
 steps:
   - script: |
         # removes the refs/tags/
-        export GIT_TAG=${BUILD_SOURCEBRANCH:10} 
+        export GIT_TAG=${BUILD_SOURCEBRANCH:10}
         export ENVIRONMENT=$(echo ${GIT_TAG} | cut --delimiter=/ -f2)
         export RELEASE_VERSION=$(echo ${GIT_TAG} | cut --delimiter=/ -f3)
         export DOCKER_REGISTRY_PASSWORD
@@ -171,7 +171,7 @@ steps:
 
 ### Hot Fix
 
-### Feature Flow 
+### Feature Flow
 
 ### Managing multiple releases
 

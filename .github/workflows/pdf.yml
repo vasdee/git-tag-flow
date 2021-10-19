@@ -17,7 +17,7 @@ jobs:
           args: >- 
             --output=output/gtf.pdf
             ${{ steps.files_list.outputs.files }}
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v2.2.4
         with:
           name: output
           path: output

@@ -19,5 +19,5 @@ jobs:
             ${{ steps.files_list.outputs.files }}
       - uses: actions/upload-artifact@v2.2.4
         with:
-          name: output
-          path: output
+          name: gtf.pdf
+          path: output/gtf.pdf

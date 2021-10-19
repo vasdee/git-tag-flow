@@ -111,14 +111,14 @@ name that is used to trigger a release, when the `release/` tag is applied.
 ## Interaction with changelogs
 
 git-tag-flow doesn't believe in automatic generation of changelogs. Automatic
-generation of changelogs is not a deterministic action and change logs **should**
+generation of changelogs is not a deterministic action and changelogs **should**
 be managed via the dev, and treated as a change to the code base in which it
 lives.
 
 That being said, there is nothing to stop you generating a changelog during a
 build event.
 
-## Scenarios
+## Scenarios 
 
 ### Simple Scenario
 
@@ -154,7 +154,7 @@ trigger:
 steps:
   - script: |
         # removes the refs/tags/
-        export GIT_TAG=${BUILD_SOURCEBRANCH:10}
+        export GIT_TAG=${BUILD_SOURCEBRANCH:10} 
         export ENVIRONMENT=$(echo ${GIT_TAG} | cut --delimiter=/ -f2)
         export RELEASE_VERSION=$(echo ${GIT_TAG} | cut --delimiter=/ -f3)
         export DOCKER_REGISTRY_PASSWORD
@@ -258,3 +258,60 @@ It would be expected in this case that the CICD solution would create the
 frontend and backend artifacts, before the deployment procedure is called. This
 might result in two artifacts, `frontend-1.0.2.zip` and `backend-1.0.2.zip`,
 that is, they have inherited the version number of the release deployment.
+
+It would be expected in this case that the CICD solution would create the 
+frontend and backend artifacts, before the deployment procedure is called. 
+This might result in two artifacts, `frontend-1.0.2.zip` and `backend-1.0.2.zip`, 
+that is, they have inherited the version number of the release deployment.
+
+An example pipeline build in this case would be a single deploy based build that is 
+triggered after a `release/` tag is detected.
+
+```yaml
+variables:
+  - name: isReleaseTag
+    value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/release/')]
+
+trigger:
+  tags:
+    include:
+      - release/*
+
+steps:
+  - script: |
+        # removes the refs/tags/
+        export GIT_TAG=${BUILD_SOURCEBRANCH:10} 
+        export ENVIRONMENT=$(echo ${GIT_TAG} | cut --delimiter=/ -f2)
+        export RELEASE_VERSION=$(echo ${GIT_TAG} | cut --delimiter=/ -f3)
+        export DOCKER_REGISTRY_PASSWORD
+        export DOCKER_REGISTRY_USERNAME
+        export DOCKER_REGISTRY_FQDN
+        make -e deploy
+    env:
+      DOCKER_REGISTRY_PASSWORD: $(REGISTRY_PASSWORD)
+      DOCKER_REGISTRY_USERNAME: $(REGISTRY_USERNAME)
+      DOCKER_REGISTRY_FQDN: $(REGISTRY_FQDN)
+    displayName: Deploy...
+    condition: eq(variables.isReleaseTag, true)
+```
+
+This pipeline could easily be extended to provide continuous deployment to a
+development server. For this, any change to the main branch could trigger a 
+deployment and/or run CI tests. 
+
+## Best Practices
+
+###  Abstract pipeline code where possible into easier to run scripts/make targets.
+
+This isn't specific to git-tag-flow, but a good practice is to encapsulate as
+much as you can into scripts that can be run externally, not just within your pipelines.
+
+There will be times when you need to deploy manually, you don't want to be trying 
+to recreate your pipeline logic in your developer environment in a pressure situation. 
+
+Another good reason to apply this logic, is that pipelines come and go, as does git
+hosting. Not being locked into a particular vendor can be a good thing.
+
+###  Stick with the defaults, `release/` and `staging/` to be consistent.
+
+

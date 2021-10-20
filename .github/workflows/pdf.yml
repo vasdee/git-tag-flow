@@ -1,8 +1,8 @@
 name: Make pdf
 on: push
 jobs:
-  convert_via_pandoc:
-    runs-on: ubuntu-18.04
+  convert_to_pdf:
+    runs-on: ubuntu-20.04
     steps:
       - name: Check out markdown
         uses: actions/checkout@v2

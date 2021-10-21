@@ -22,9 +22,9 @@ jobs:
         uses: docker://pandoc/latex:2.14.2
         with:
           args: >- 
-            --output=output/gtf-${{ steps.release_version.release_version }}.pdf
+            --output=output/gtf-${{ steps.release_version.outputs.release_version }}.pdf
             ${{ steps.files_list.outputs.files }}
       - uses: actions/upload-artifact@v2.2.4
         with:
-          name: gtf-${{ steps.release_version.release_version }}.pdf
-          path: output/gtf-${{ steps.release_version.release_version }}.pdf
+          name: gtf-${{ steps.release_version.outputs.release_version }}.pdf
+          path: output/gtf-${{ steps.release_version.outputs.release_version }}.pdf

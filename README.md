@@ -1,4 +1,4 @@
-# Git Tag Flow (GTF) Version 0.0.6
+# Git Tag Flow (GTF) Version 0.0.7
 
 ![GTF](diagrams/gtfo.png)
 

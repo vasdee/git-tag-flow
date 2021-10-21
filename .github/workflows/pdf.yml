@@ -17,7 +17,7 @@ jobs:
       - name: Get release version
         id: release_version
         run: |
-          echo "::set-output name=release_version::echo ${{ github.ref }} | cut --delimiter=/ -f4"
+          echo "::set-output name=release_version::$(echo ${{ github.ref }} | cut --delimiter=/ -f4)"
       - name: Convert to pdf
         uses: docker://pandoc/latex:2.14.2
         with:

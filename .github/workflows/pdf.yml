@@ -1,8 +1,11 @@
-name: Make pdf
-on: push
+name: Make pdf for every release
+on:
+  push:
+    tags:
+      - release/*
 jobs:
-  convert_via_pandoc:
-    runs-on: ubuntu-18.04
+  convert_to_pdf:
+    runs-on: ubuntu-20.04
     steps:
       - name: Check out markdown
         uses: actions/checkout@v2
@@ -11,13 +14,17 @@ jobs:
         run: |
           mkdir output
           echo "::set-output name=files::README.md"
+      - name: Get release version
+        id: release_version
+        run: |
+          echo "::set-output name=release_version::$(echo ${{ github.ref }} | cut --delimiter=/ -f4)"
       - name: Convert to pdf
         uses: docker://pandoc/latex:2.14.2
         with:
           args: >- 
-            --output=output/gtf.pdf
+            --output=output/gtf-${{ steps.release_version.outputs.release_version }}.pdf
             ${{ steps.files_list.outputs.files }}
       - uses: actions/upload-artifact@v2.2.4
         with:
-          name: gtf.pdf
-          path: output/gtf.pdf
+          name: gtf-${{ steps.release_version.outputs.release_version }}.pdf
+          path: output/gtf-${{ steps.release_version.outputs.release_version }}.pdf

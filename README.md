@@ -19,29 +19,28 @@ Trunk based develops suggests that your architecture should change in order to
 facilitate being able to deploy potentially "broken" functionality into
 production.
 
-Git Tag Flow takes the simplicity of trunk and applies *some* of the wisdom from
-gitflow, enabling GitOps via tags and enabling traceability of actions back to
-atomic commits. The principle is simple: you should always be able to trace back
+GTF takes the simplicity of trunk and applies *some* of the wisdom from gitflow,
+enabling GitOps via tags and enabling traceability of actions back to atomic
+commits. The principle is simple: you should always be able to trace back
 exactly what you deployed to production, within your git repository. This is not
 only common sense, but makes replicating production issues locally a less
 painful process.
 
 ## When should I use git tag flow?
 
-Git tag flow is ideal for microservices, or solutions where the artefacts
-produced are 1-1 with the repositories. For example, if you maintain several
-repositories that each build a single docker image and maintain a deployment via
-another git repository, say via a `docker-compose.yml` file, then git-tag-flow
-is ideal.
+GTF is ideal for microservices, or solutions where the artefacts produced are
+1-1 with the repositories. For example, if you maintain several repositories
+that each build a single docker image and maintain a deployment via another git
+repository, say via a `docker-compose.yml` file, then git-tag-flow is ideal.
 
-It is not limited to container solutions....
+GTF is not limited to container solutions of course.
 
 Consider a classic web application with a REST-full backend, a Single Page
 Application (SPA) and infrastructure-as-code (IAC) definition that deploys to a
 cloud environment, each hosted in their own Git repository. Using git-tag-flow,
 the backend and front-end repositories will both produce their own distinct
-artefacts, the infrastructure-as-code deployment will deploy the artefacts to
-the target estate.
+artefacts, the infrastructure-as-code deployment will deploy the vetted and
+versioned artefacts to the target estate.
 
 It can also work with mono-repos, however it comes with some caveats which are
 likely already accepted regardless of workflow.
@@ -55,7 +54,10 @@ should have controlled access.
 
 short-lived branches that are used for working on various code types. These are
 left up to the discretion of the user, but some typical examples would be
-`feature/some-feature`, `bugfix/JIRA-1234` or `chore/update-changelog`
+ - `feature/some-feature`
+ - `bugfix/JIRA-1234`
+ - `chore/update-changelog`
+ - `thys/perhapsthisworks`
 
 For deployment repositories, an extra shortlived branch is required that is used
 to deploy your solution from, typically this is called `staging/`
@@ -103,8 +105,8 @@ is however, good practice to place all releases within a `staging/` branch so
 that pull requests (and pull request specific pipelines) can occur.
 
 You might ask, "Why is `staging/` the defacto name for a what is essentially a
-release branch". Well, the answer is that naming your branches the same as a tag
-can cause some confusion. For example, `git checkout release/1.0.0` - are we
+release branch". The answer is that naming a branch the same as a tag
+can cause confusion. For example, `git checkout release/1.0.0`: are we
 checking out a tag or branch here? For this reason `staging/` is the branch
 name that is used to trigger a release, when the `release/` tag is applied.
 
@@ -112,8 +114,8 @@ name that is used to trigger a release, when the `release/` tag is applied.
 
 git-tag-flow doesn't believe in automatic generation of changelogs. Automatic
 generation of changelogs is not a deterministic action and changelogs **should**
-be managed via the dev, and treated as a change to the code base in which it
-lives.
+be managed by the developer, and treated as a change to the code base in which
+it lives.
 
 That being said, there is nothing to stop you generating a changelog during a
 build event.
@@ -225,6 +227,47 @@ steps:
     displayName: Build and Push Release Image
     condition: eq(variables.isReleaseTag, true)
 ```
+
+### Generate pdf for every release
+
+In this scenario every `release/` tag triggers the generation of pdf version of
+the project's README.md. We use github actions here as this is where the GTF
+repo is currently hosted.
+
+```yaml
+name: Make pdf for every release
+on:
+  push:
+    tags:
+      - release/*
+jobs:
+  convert_to_pdf:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out markdown
+        uses: actions/checkout@v2
+      - name: Create files list
+        id: files_list
+        run: |
+          mkdir output
+          echo "::set-output name=files::README.md"
+      - name: Get release version
+        id: release_version
+        run: |
+          echo "::set-output name=release_version::$(echo ${{ github.ref }} | cut --delimiter=/ -f4)"
+      - name: Convert to pdf
+        uses: docker://pandoc/latex:2.14.2
+        with:
+          args: >- 
+            --output=output/gtf-${{ steps.release_version.outputs.release_version }}.pdf
+            ${{ steps.files_list.outputs.files }}
+      - uses: actions/upload-artifact@v2.2.4
+        with:
+          name: gtf-${{ steps.release_version.outputs.release_version }}.pdf
+          path: output/gtf-${{ steps.release_version.outputs.release_version }}.pdf
+
+```
+
 
 ### Mono Repos
 

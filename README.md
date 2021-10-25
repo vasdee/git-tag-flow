@@ -356,7 +356,7 @@ steps:
       DOCKER_REGISTRY_FQDN: $(REGISTRY_FQDN)
     displayName: Deploy...
     condition: eq(variables.isReleaseTag, true)
-``**
+```
 
 This pipeline could easily be extended to provide continuous deployment to a
 development server. For this, any change to the main branch could trigger a 

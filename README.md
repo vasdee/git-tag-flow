@@ -173,6 +173,26 @@ steps:
 
 ### Hot Fix
 
+Say the current production deploy is 1.0.0. We have a multi repo solution,
+2 x service repos: 
+- frontend:2.0.0 and 
+- backend:2.1.0
+
+1 x deploy repo say
+- stack:1.0.0
+
+frontend needs a hotfix:
+- in frontend repo branch from release/2.0.0 to hotfix/JIRA-1234
+- fixy fix fix
+- apply tag release/2.0.1 to hotfix/JIRA-1234 branch, this will create a docker
+  container tagged with 2.0.1
+- in the deploy repo, branch from the release/prod/1.0.0 -> staging/prod/1.0.1
+- update the compose file to match the version of frontend to 2.0.1 and commit
+  tag
+- the staging/prod/1.0.1 branch with release/prod/1.0.1 pipeline will deploy
+   the solution
+
+
 ### Feature Flow
 
 ### Managing multiple releases
@@ -336,11 +356,24 @@ steps:
       DOCKER_REGISTRY_FQDN: $(REGISTRY_FQDN)
     displayName: Deploy...
     condition: eq(variables.isReleaseTag, true)
-```
+``**
 
 This pipeline could easily be extended to provide continuous deployment to a
 development server. For this, any change to the main branch could trigger a 
 deployment and/or run CI tests. 
+
+### Monorepo hotfix scenario
+
+Say the current prod release is 1.0.0 and you need to hotfix:
+ - branch from tag `release/prod/1.0.0` to staging/JIRA-1234-ohshyte 
+ - fixy fix fix, test, pray
+ - commit to staging/JIRA-1234-ohshyte branch
+ - tag staging/JIRA-1234-ohshyte branch with release/prod/1.0.1 
+ - The pipeline will deploy `release/prod/1.0.1` the moment it gets pushed.
+ - merge staging/JIRA-1234-ohshyte back into master straight away
+ - delete branch staging/JIRA-1234-ohshyte
+
+While all this is happening every other dev continues as per normal.
 
 ## Best Practices
 

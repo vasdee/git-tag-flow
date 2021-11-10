@@ -1,6 +1,6 @@
 # Git Tag Flow (GTF) Version 0.0.7
 
-![GTF](diagrams/gtfo.png)
+![GTF](images/gtfo.png)
 
 Git Tag Flow is an alternate, convention based workflow to gitflow and trunk
 based work flows. It combines the best (lightest) features of both, and provides
@@ -90,6 +90,27 @@ your pipeline is able to parse the tag values. This deployment repository also
 assumes that a manifest exists that defines the correct version of the SPA and
 backend components, like a `docker-compose.yml` file or VM cloud init script.
 
+You can of course tailor the tag to contain whatever information you require, 
+if this basic structure doesn't fit your needs. It's entirely up to you, as 
+long as you can parse the structure and use it. Keep in mind that the purpose 
+of a git tag, especially a `release/` tag in GTF is mark when an event happen, 
+so that you can trace a deployment back to your source code. Putting more than
+just 'facts' like environments etc in there, might make this traceability less
+deterministic.
+
+### Deployment and Service repositories
+
+In a multi-repository setup, your typical setup might be a single git repository 
+per service, which produces a single artefact, be that a docker image or other.
+
+Multiple of these services would exist within a given solution and the combination
+of them communicating comprises what makes up a deployment. 
+
+Typically a single git repository exists that defines what versions of what 
+services define a given release. In this document it is referred to as a 
+*deployment manifest* but you can think of it as a simple `docker-compose.yml`
+, when using GTF with docker services. Of course it could also be much 
+more complicated, depending on your release process. 
 
 ### Restrictions on Tag placement
 
@@ -122,19 +143,36 @@ build event.
 
 ## Scenarios 
 
-### Simple Scenario
+The following are scenarios that explain the typical actions that happen within
+a development lifecyle, when using tag flow. Within all the examples, it is 
+assumed that a pipeline is present that is capable of triggering an action
+based on the presence of a tagged commit. 
 
-* branch
-* update changelog
-* code
-* push
-* review
-* code && push
-* rebase
-* tag (optional)
-* merge to master
+### Feature Flow
 
+The most basic and day to day flow does not differ from any other workflow.
+A developer or set of developers work in a seperate branch, say a `feature/` 
+branch that has been forked from the main branch at some point. 
 
+Where GTF comes into play is that users can, if they require, release their
+code and trigger a build of their service artefact by applying a `release/`
+tag. 
+
+This is not the normal behaviour, and usually reserved for hot fix events,
+or similar. However it *is* possible.
+
+The standard behaviour would be, developer codes feature in feature branch,
+then applies whatever merge strategy to merge into the master branch. Once
+a release is required/ready, then the main branch can be tagged with say
+`release/1.0.0` to trigger a build of that service. This service artefact
+can then be referenced within a deployment manifest.
+
+![Feature Workflow](images/FeatureFlow.png)
+
+**note** for purists, who don't want to mess with the main branch, a 
+temporary branch can be created to prep the release, apply the tag and 
+merge into master. This is the way, if you have main branch permissions 
+that don't allow direct interaction via a user.
 
 ### Deploying to environment via tag
 
@@ -174,28 +212,134 @@ steps:
 ### Hot Fix
 
 Say the current production deploy is 1.0.0. We have a multi repo solution,
-2 x service repos: 
-- frontend:2.0.0 and 
-- backend:2.1.0
+and the manifest looks similar to the following.
 
-1 x deploy repo say
-- stack:1.0.0
+```yml
+version: 1.0.0
+deploy:
+    frontend:
+        version: 2.0.0
+        
+    backend:
+        version: 2.1.0
+```
 
-frontend needs a hotfix:
-- in frontend repo branch from release/2.0.0 to hotfix/JIRA-1234
-- fixy fix fix
-- apply tag release/2.0.1 to hotfix/JIRA-1234 branch, this will create a docker
-  container tagged with 2.0.1
-- in the deploy repo, branch from the release/prod/1.0.0 -> staging/prod/1.0.1
-- update the compose file to match the version of frontend to 2.0.1 and commit
-  tag
-- the staging/prod/1.0.1 branch with release/prod/1.0.1 pipeline will deploy
-   the solution
+In this scenario the frontend service requires a hotfix to the production
+deployment.
 
+A developer working on the frontend will create a branch from `release/2.0.0` 
+to `hotfix/fix-urgent-bug`
 
-### Feature Flow
+Apply the fix and commit. Assuming testing is all good, then the new release
+for the frontend service can be triggered directly from the this branch by applying
+the tag, `release/2.0.1`, creating the new service artefact in the process.
+
+Now, in the deployment repository, we branch from the current prod release 
+tag `release/prod/1.0.0` into a branch called `staging/1.0.1`. *Notice 
+the staging branch doesn't have an environment indicated, that's because with
+GTF any staging branch can potentially release to any environment - as long 
+as your pipline is setup that way*.
+
+The deployment manfiest is updated to reflect the bump in the frontend service,
+2.0.1 and production version bump.
+
+```yml
+version: 1.0.1
+deploy:
+    frontend:
+        version: 2.0.1
+
+    backend:
+         version: 2.1.0
+```
+
+The commit is then tagged to be deployed to production via, `release/prod/1.0.1`
+which triggers a production deployment with the new service.
+    
+The staging branch`staging/1.0.1`, is then merged back into main branch.
+
+![HotFix Workflow](images/HotFix.png)
+
 
 ### Managing multiple releases
+
+There's no easy way to manage multiple releases without at least a little bit 
+of pain. When you have 2 or more active releases, all in various states of being 
+deployed to an environment, at some point all of the `staging/` branches will 
+need to be merged into the main branch. This process is straight forward if 
+your release versioning is linear, but what if they aren't? At when it comes 
+time to merge, you might lose the history of the deployment manifest.
+
+Within a multi repo solution, say the current production deploy is 1.0.0 and 
+the team is busy with a UAT cycle for an upcoming 2.0.0 release. 
+
+Consider a deployment manifest for the existing production deploy, version 1.0.0 
+that looks like this.
+
+```yml
+version: 1.0.0
+deploy:
+    frontend:
+        version: 2.0.0
+        
+    backend:
+        version: 2.1.0
+```
+
+For simplicities sake, the development team has been busy pushing ahead with 
+a major release, and has bumped all the service versions up by a major version.
+
+```yml
+version: 2.0.0
+deploy:
+    frontend:
+        version: 3.0.0
+        
+    backend:
+        version: 3.0.0
+```
+
+A production bug is found within the version 1.0.0 release, which needs to be
+addressed. It's a significant bug, so will require some quick testing in a lower
+environment before being deployed to production.
+
+Within the frontend service repository, a developer has created a fix and 
+applied tag `release/2.0.1`, creating a new 2.0.1 version artefact in the process.
+
+In the deployment repository, a branch is created from the `release/prod/1.0.0` 
+tag, called `staging/1.0.x`. 
+
+**Note:** The `x` is used in this case just to be clear that
+this branch could potentially release any patch level release. There is no reason
+not to lock it down to `staging/1.0.1`, but sometimes there can be multiple
+iterations before the bug is truely squashed.
+
+The developer updates the manifest to use the new version of the frontend - 2.0.1.
+
+```yml
+version: 1.0.1
+deploy:
+    frontend:
+        version: 2.0.1
+        
+    backend:
+        version: 2.1.0
+```
+
+Once this and any other changes like changelogs are updated, then the change is 
+committed and tagged for release to a test environment, `release/test/1.0.1`
+
+Once the testing is approved, the same commit is tagged for release to production,
+`release/prod/1.0.1` and merged.
+
+Meanwhile, the other developers have been busy developing the next version of the 
+production (v2.0.0) and have deployed to the uat environment several times.
+
+![Multiple Releases Workflow](images/MultipleReleases.png)
+
+
+The rule of thumb when managing multiple releases is that once a release is deployed
+to the highest environment, production. It should be merged to the main branch.
 
 ### Container builds with latest and fixed version tags
 
@@ -388,6 +532,23 @@ to recreate your pipeline logic in your developer environment in a pressure situ
 Another good reason to apply this logic, is that pipelines come and go, as does git
 hosting. Not being locked into a particular vendor can be a good thing.
 
-###  Stick with the defaults, `release/` and `staging/` to be consistent.
+###  Alternatives to the default, `release/` tag and `staging/` branch names
 
+There's no firm rules around the tag and branching names for feature, bugfix, hotfix and
+chore ephemeral branches. That is left completely up to the developer. The only 
+suggested branches and tag names are the `release/` tag and `staging/` branch. 
 
+Some alternatives are to the above are `deploy/` tag and `release/` branch, it is 
+entirely up to you and what makes sense for your situation. However you should ask
+yourself, does the verb and noun makes sense when it is applied to the tag and branch?
+
+### Embrace Fast Forward merge commits
+
+When using `staging/` branches within your deployment repository, if you apply multiple
+`release/` tags within that branch, then rebasing and squashing becomes hard, because
+you would lose the commits that those tags are attached to. For this reason, embrace
+merge commits and keep all that history.
+
+The same can't be said for your service repositories. If you aren't triggering builds 
+from your feature/bugfix/hotfix branches, then there is no reason why you can't keep
+your commit history lean-and-mean. Rebase and squash is your friend here.

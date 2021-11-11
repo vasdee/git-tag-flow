@@ -54,6 +54,7 @@ should have controlled access.
 
 short-lived branches that are used for working on various code types. These are
 left up to the discretion of the user, but some typical examples would be
+
  - `feature/some-feature`
  - `bugfix/JIRA-1234`
  - `chore/update-changelog`

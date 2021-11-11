@@ -345,7 +345,7 @@ to the highest environment, production. It should be merged to the main branch.
 
 Example of a general purpose build pipeline that can create a `latest` docker
 image or fix version depending on the build condition. For reference, this
-particular build pipeline extract is from Azure Devops.
+particular build pipeline extract is from Azure DevOps.
 
 ```yaml
 
@@ -433,51 +433,146 @@ jobs:
 ```
 
 
-### Mono Repos
+### Mono-Repos
 
 Git-Tag-Flow can work with mono-repos, however there are reasons why a mono repo
 might not always be [a](https://fossa.com/blog/pros-cons-using-monorepos/)
 [good](https://alexey-soshin.medium.com/monorepo-is-a-bad-idea-5e587e848a07)
 [choice](https://semaphoreci.com/blog/what-is-monorepo).
 
-Unlike with a multi-repo setup, in a mono-repo setup you can't deploy your
-artifacts via separate version numbers, as now your repository contains multiple
-projects and using git tags wouldn't be efficient. Instead, the release
-deployment is used to generate the artifacts and deploy the release all in one.
+This is just an example to mimic the multi-repository setup as much as possible. 
+There could be any number of ways to achieve the same outcome.
 
-For example, given the follwing simple mono-repo containing the a frontend,
-backend and deployment folder.
+Consider the following monorepo structure. It contains the services `frontend`
+and `backend`, a `deploy` folder containing something that represents a 
+deployment manifest. 
 
-```
+```shell
+backend/
+deploy/
+frontend/
 .git
-project/
-  /frontend/
-  /backend/
-  /deployment/
+.gitignore
+README.md
 ```
 
-It is time for a new release to our test environment, so a dev creates a
-`staging/` branch to manage the deployments from, in this example we'll use
-`staging/1.0.2`. A tag is then placed on this branch, called
-`release/test/1.0.2` and pushed to the remote.
+With a multi-repo structure, each of the services would be within their own 
+repository, so releasing a new build of the service is a matter of applying 
+a simple tag like `release/1.0.0`. In the monorepo world, we can't apply this 
+without assuming that all services are to be released at the same time, with
+the same version number. 
+
+To move around this limitation, introduce an extra segment into the `release`
+tag structure to differentiate. Following on from the above example, to 
+release a new version of the frontend service, you would apply the tag
+`release/frontend/1.0.0`. Similarly for the backend service. 
+
+Your pipeline that reacts to this tag being applied obviously needs to be 
+able to build accordingly, based on what service has been requested in the 
+tag. This shouldn't be a problem, since this is exactly what is required 
+when performing a deployment - at least in the multi-repo scenario.
+
+Note how in this examplem the service in this case matches the service 
+folder name, this would make it very easy to create a generic pipeline 
+that builds any service within a matched direction.
+
+So we can now build our services within the mono-repo independently, however
+we now have a problem when we want to release. Traditionally with GTF, 
+we would tag the deployment repository with a tag like `release/prod/1.0.0` 
+to indicate that we want to deploy the specific versions of the services
+to production. This tag structure, unfortunately, conflicts with the 
+*new* structure for releasing an artefact of a given service, so we need to 
+adapt.
+
+There's a few ways we could do this, we could naively adjust our pipeline 
+to only look for pre-canned service folders specified within the `release/`
+tag, but this wouldn't scale as we'd have to constantly update the pipeline 
+as you add new services. You could simply change your pipeline to react 
+differently if the "deploy" folder is detected within the `release/` tag,
+ie `release/deploy/1.0.0`. This would work well, but could look confusing
+when looking through git history.
+Finally you could change the prefix of a deployment specific `release/` tag 
+from `release/` to `deploy/` and keep the structure the same and at the 
+same time be completely specific about what is a deployment and what is a 
+build.
+
+#### Monorepo hotfix scenario
+
+Given all the above, a hotfix scenario in a mono-repo would be as follows.
+
+Assume the current production release is the following deployment-manifest,
+which is defined (somehow) within the deploy folder of the repo. Also assume
+for arguments sake that the chosen tag used to deploy this release was 
+`deploy/prod/1.0.0` and that the release tags to build the service artefacts
+where `release/frontend/2.0.0` and `release/backendfrontend/2.1.0`. 
+
+```yml
+version: 1.0.0
+deploy:
+    frontend:
+        version: 2.0.0
+        
+    backend:
+        version: 2.1.0
+```
+
+A hotfix is required within the frontend service, so the developer follows
+the standard procedure and branches from the `release/frontend/2.0.0` tag
+into a branch called `hotfix/fix-critical-bug`. 
+
+Like the multi-repo hotfix scenario, the fix is significant so a quick test
+environment deployment is required before it can go to production. 
+
+The developer fixes the code in the hotfix branch and commits the code. They
+then apply a release tag, to build the service so that it can be deployed. 
+`release/frontend/2.0.1`. 
+
+After the build is finished and the artefact exists, the deployment can begin.
+
+The developer creates a staging branch, forked from the existing deployment
+tag, `deploy/prod/1.0.0`, calling it `staging/1.0.1`. The developer edits the 
+deployment manifest to indicate the new version of the frontend service is 
+required. They also bump the version of the release to `1.0.1` - indicating 
+a bugfix in the semantic versioning world.
+
+```yml
+version: 1.0.1
+deploy:
+    frontend:
+        version: 2.0.1
+        
+    backend:
+        version: 2.1.0
+```
+
+The developer wants to deploy to test, so the tag `deploy/test/1.0.1` is
+applied to the commit and pushed to trigger the deployment pipeline. After
+the fix has been tested, the developer can now apply and push the production
+tag, `deploy/prod/1.0.1` to the same commit.
+
+After the deployment is complete and confirmed in production, the hotfix
+branch is merged into the main branch, followed by the `staging/` branch. 
+While all this is happening every other dev continues as per normal.
+
+The following diagram illustrates the process.
+
+![Mono Repo Workflow](images/MonoRepo.png)
+
 
 It would be expected in this case that the CICD solution would create the
-frontend and backend artifacts, before the deployment procedure is called. This
-might result in two artifacts, `frontend-1.0.2.zip` and `backend-1.0.2.zip`,
-that is, they have inherited the version number of the release deployment.
-
-It would be expected in this case that the CICD solution would create the 
 frontend and backend artifacts, before the deployment procedure is called. 
-This might result in two artifacts, `frontend-1.0.2.zip` and `backend-1.0.2.zip`, 
-that is, they have inherited the version number of the release deployment.
+This might result in two artifacts, `frontend-2.0.1.zip` and `backend-2.1.0.zip`,
+or similar with docker images `frontend:2.0.1` and `backend:2.1.0`. The point
+is, they must exist before a deployment can occur - because a build and 
+deployment are two distinct actions.
 
-An example pipeline build in this case would be a single deploy based build that is 
-triggered after a `release/` tag is detected.
+An example pipeline build in this example that  would be a deploy a set 
+of artefacts when triggered after a `deploy/` tag is detected.
 
 ```yaml
 variables:
-  - name: isReleaseTag
-    value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/release/')]
+  - name: isDeployTag
+    value: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/deploy/')]
 
 trigger:
   tags:
@@ -499,25 +594,14 @@ steps:
       DOCKER_REGISTRY_USERNAME: $(REGISTRY_USERNAME)
       DOCKER_REGISTRY_FQDN: $(REGISTRY_FQDN)
     displayName: Deploy...
-    condition: eq(variables.isReleaseTag, true)
+    condition: eq(variables.isDeployTag, true)
 ```
 
 This pipeline could easily be extended to provide continuous deployment to a
 development server. For this, any change to the main branch could trigger a 
 deployment and/or run CI tests. 
 
-### Monorepo hotfix scenario
 
-Say the current prod release is 1.0.0 and you need to hotfix:
- - branch from tag `release/prod/1.0.0` to staging/JIRA-1234-ohshyte 
- - fixy fix fix, test, pray
- - commit to staging/JIRA-1234-ohshyte branch
- - tag staging/JIRA-1234-ohshyte branch with release/prod/1.0.1 
- - The pipeline will deploy `release/prod/1.0.1` the moment it gets pushed.
- - merge staging/JIRA-1234-ohshyte back into master straight away
- - delete branch staging/JIRA-1234-ohshyte
-
-While all this is happening every other dev continues as per normal.
 
 ## Best Practices
 
@@ -541,6 +625,8 @@ suggested branches and tag names are the `release/` tag and `staging/` branch.
 Some alternatives are to the above are `deploy/` tag and `release/` branch, it is 
 entirely up to you and what makes sense for your situation. However you should ask
 yourself, does the verb and noun makes sense when it is applied to the tag and branch?
+
+This is especially true when using GTF with mono-repos.
 
 ### Embrace Fast Forward merge commits
 

@@ -117,7 +117,7 @@ more complicated, depending on your release process.
 
 Tags should always trigger a pipeline, regardless of where they are placed
 within version control. The reason for this is that managing multiple releases
-is a very real thing and the reason the deployment repository specifies a
+is a very real thing and that is why the deployment repository specifies a
 `staging/` branch convention.
 
 When managing multiple `staging/` branches, release tags can be placed on any
@@ -212,7 +212,7 @@ steps:
 
 ### Hot Fix
 
-Say the current production deploy is 1.0.0. We have a multi repo solution,
+Say the current production deploy is 1.0.0. We have a multi-repo solution,
 and the manifest looks similar to the following.
 
 ```yml
@@ -232,7 +232,7 @@ A developer working on the frontend will create a branch from `release/2.0.0`
 to `hotfix/fix-urgent-bug`
 
 Apply the fix and commit. Assuming testing is all good, then the new release
-for the frontend service can be triggered directly from the this branch by applying
+for the frontend service can be triggered directly from this branch by applying
 the tag, `release/2.0.1`, creating the new service artefact in the process.
 
 Now, in the deployment repository, we branch from the current prod release 
@@ -257,7 +257,7 @@ deploy:
 The commit is then tagged to be deployed to production via, `release/prod/1.0.1`
 which triggers a production deployment with the new service.
     
-The staging branch`staging/1.0.1`, is then merged back into main branch.
+The staging branch `staging/1.0.1`, is then merged back into main branch.
 
 ![HotFix Workflow](images/HotFix.png)
 
@@ -268,10 +268,10 @@ There's no easy way to manage multiple releases without at least a little bit
 of pain. When you have 2 or more active releases, all in various states of being 
 deployed to an environment, at some point all of the `staging/` branches will 
 need to be merged into the main branch. This process is straight forward if 
-your release versioning is linear, but what if they aren't? At when it comes 
+your release versioning is linear, but what if they aren't? When it comes 
 time to merge, you might lose the history of the deployment manifest.
 
-Within a multi repo solution, say the current production deploy is 1.0.0 and 
+Within a multi-repo solution, say the current production deploy is 1.0.0 and 
 the team is busy with a UAT cycle for an upcoming 2.0.0 release. 
 
 Consider a deployment manifest for the existing production deploy, version 1.0.0 
@@ -473,7 +473,7 @@ able to build accordingly, based on what service has been requested in the
 tag. This shouldn't be a problem, since this is exactly what is required 
 when performing a deployment - at least in the multi-repo scenario.
 
-Note how in this examplem the service in this case matches the service 
+Note how in this example the service in this case matches the service 
 folder name, this would make it very easy to create a generic pipeline 
 that builds any service within a matched direction.
 
@@ -505,7 +505,7 @@ Assume the current production release is the following deployment-manifest,
 which is defined (somehow) within the deploy folder of the repo. Also assume
 for arguments sake that the chosen tag used to deploy this release was 
 `deploy/prod/1.0.0` and that the release tags to build the service artefacts
-where `release/frontend/2.0.0` and `release/backendfrontend/2.1.0`. 
+where `release/frontend/2.0.0` and `release/backend/2.1.0`. 
 
 ```yml
 version: 1.0.0
@@ -561,13 +561,13 @@ The following diagram illustrates the process.
 
 
 It would be expected in this case that the CICD solution would create the
-frontend and backend artifacts, before the deployment procedure is called. 
-This might result in two artifacts, `frontend-2.0.1.zip` and `backend-2.1.0.zip`,
+frontend and backend artefacts, before the deployment procedure is called. 
+This might result in two artefacts, `frontend-2.0.1.zip` and `backend-2.1.0.zip`,
 or similar with docker images `frontend:2.0.1` and `backend:2.1.0`. The point
 is, they must exist before a deployment can occur - because a build and 
 deployment are two distinct actions.
 
-An example pipeline build in this example that  would be a deploy a set 
+An example pipeline build in this example that would be to deploy a set 
 of artefacts when triggered after a `deploy/` tag is detected.
 
 ```yaml
@@ -612,7 +612,7 @@ This isn't specific to git-tag-flow, but a good practice is to encapsulate as
 much as you can into scripts that can be run externally, not just within your pipelines.
 
 There will be times when you need to deploy manually, you don't want to be trying 
-to recreate your pipeline logic in your developer environment in a pressure situation. 
+to recreate your pipeline logic in your developer environment in a high pressure situation. 
 
 Another good reason to apply this logic, is that pipelines come and go, as does git
 hosting. Not being locked into a particular vendor can be a good thing.
